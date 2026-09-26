@@ -361,8 +361,29 @@ class AllParentsTests(SimpleTestCase):
             (FirstParent, SecondParent, CommonAncestor),
         )
 
+    def test_all_parents_is_cached(self):
+        opts = Child._meta
+        opts.__dict__.pop("all_parents", None)
+
+        all_parents = opts.all_parents
+
+        self.assertIs(opts.all_parents, all_parents)
+
     def test_get_parent_list(self):
-        self.assertEqual(Child._meta.get_parent_list(), list(Child._meta.all_parents))
+        parent_list = Child._meta.get_parent_list()
+
+        self.assertEqual(parent_list, list(Child._meta.all_parents))
+        self.assertIsNot(parent_list, Child._meta.get_parent_list())
+
+    def test_get_parent_list_returns_mutable_copy(self):
+        parent_list = Child._meta.get_parent_list()
+        parent = parent_list.pop()
+
+        self.assertEqual(parent, CommonAncestor)
+        self.assertEqual(
+            Child._meta.get_parent_list(),
+            [FirstParent, SecondParent, CommonAncestor],
+        )
 
 
 class PropertyNamesTests(SimpleTestCase):
